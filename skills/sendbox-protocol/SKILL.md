@@ -1,0 +1,183 @@
+---
+name: sendbox-protocol
+description: Use when multiple agents/sessions need asynchronous file-based communication across worktrees, branches, or sessions — defines directory layout, letter naming, frontmatter spec, lifecycle (burn/archive/persist), and the canonical letter types (handoff, plan-ready, greenlight, blocker, decisions, milestone-done, broadcast). Apply when designing or running multi-agent orchestration (one orchestrator + multiple implementers / subagents) and chat-synchronous coordination is insufficient.
+---
+
+# Sendbox Protocol
+
+A file-based, lifecycle-managed **letter** convention for asynchronous coordination between agent sessions. Letters live in version control alongside code, so handoffs survive session reset, branch switch, and worktree isolation. Battle-tested on a 4-day sprint with 11+ agents, 22+ letter types, and 8 sendbox directories.
+
+## When to use
+
+**Use when:**
+- One orchestrator session coordinates 2+ implementer sessions (separate worktrees or git branches)
+- An agent must pause and request human or upstream decision before proceeding (stop-and-ask)
+- Decisions, blockers, or milestones must outlive the current chat session
+- A subagent finishes work in an isolated worktree and needs to hand artifacts back upstream
+- Broadcast to all active sessions (e.g. tool-chain change, new constraint)
+
+**Do NOT use when:**
+- The user gave a clear, trivial decision in chat AND no upstream agent has follow-up work AND no other session needs to know → just commit. See [Minimal Sendbox](#anti-patterns).
+- The information belongs in durable docs (architecture, spec, memory) → use those instead.
+- Two sessions can pair-program in real time → just talk.
+
+**Reachability test (the decisive question):** if the recipient is in a detached worktree / separate session, chat does NOT reach them — sendbox is the *delivery* mechanism, not redundancy. The "skip the letter" exemption only applies when the recipient will naturally pick the decision up (they share the chat, OR the decision becomes visible in a commit they'll rebase onto before it matters).
+
+## Core principles
+
+1. **Roles over sessions.** Address letters to a *role* (`toOrchestrator/`, `toIpcAuthor/`), not a session name. Sessions die; roles persist across handovers.
+2. **Letters are transient.** Every letter has a defined lifecycle and must be burned (`git rm`), archived, or promoted to durable docs at lifecycle end. Rotting unburned letters is the #1 hygiene failure.
+3. **Single recipient = no metadata; multi recipient = mandatory metadata.** The frontmatter trade-off matches the coordination cost.
+4. **Minimal sendbox.** If a decision is synchronous, trivial, and self-contained, do not write a letter. Commit message citing the chat decision is sufficient audit.
+5. **Sendbox is communication, not state.** Project state belongs in a dashboard or spec; letters merely *trigger* state changes.
+6. **ASCII / English filenames.** No localized characters, no spaces, no special chars — letters cross worktrees and OSes.
+7. **Letters are append-only within a lifecycle.** Edit only to mark stale or link to a superseding letter; do not silently rewrite a letter another agent has read.
+
+## Directory layout
+
+```
+docs/sendbox/                       # repo-root convention
+  to<Role>/                         # one dir per recipient role
+    handoff.md                      # session-entry brief (single recipient → no frontmatter required)
+    from-<sender>-<topic>.md        # letters back to that role
+  toAllActiveSessions/              # broadcast dir
+    from-<orchestrator>.md
+  toUser/                           # user-facing letters (glossaries, mid-task asks)
+```
+
+**Naming rules**
+
+| Slot | Rule | Example |
+|---|---|---|
+| Directory | `to<Role>` PascalCase, role/function not session | `toOrchestrator`, `toIpcL2Author`, `toCliTeam` |
+| Entry letter | `handoff.md` | the one document new session reads first |
+| Outbound letter | `from-<sender>-<topic>.md` lowercase-kebab | `from-impl-a-blocker-spec-mismatch.md` |
+| Bundle reply | `from-<sender>-<recipient>-<theme>.md` | `from-orche-impl-a-decisions.md` |
+
+**Short role aliases** (e.g. `toBe`, `toFe`, `toOrche`) are acceptable in small projects, but stay consistent within a repo. Decisions/relays always use the `-decisions.md` suffix even for a single decision — it stays bundle-ready and recipients learn one shape.
+
+## YAML frontmatter
+
+**Single recipient** — frontmatter optional. Default lifecycle = burn when the recipient's lifecycle ends. A short `> from: / recipient: / purpose: / lifecycle:` quote block at the top is sufficient.
+
+**Multi recipient** — frontmatter required:
+
+```yaml
+---
+recipients:
+  - role: <role>
+    purpose: <why they read this>
+    lifecycle: <termination condition, e.g. "until v0.1 ships" or "until superseded by <filename>">
+on_lifecycle_end: burn | archive | persist
+created: <YYYY-MM-DD>
+created_in: <human-readable origin tag, e.g. "orche-2026-05-14" or "worktree:.worktrees/api-v1">
+---
+```
+
+- `lifecycle` should be a concrete *condition* a future reader can evaluate without context (a date, a milestone name, a "superseded by" pointer). Avoid open-ended "until done".
+- `created_in` is a human label, not a UUID — readable enough that an audit can trace which session produced the letter.
+- For broadcasts, declare a supersession rule explicitly: either `until <event>` or `until superseded by <toAllActiveSessions/from-orche-...md>`.
+
+- `burn` = `git rm` (default).
+- `archive` = move to `docs/sendbox/archive/` for historical reference.
+- `persist` = promote content into durable docs (architecture, memory, spec) via human-in-the-loop review, then burn the letter.
+
+A letter with neither frontmatter nor a single clear recipient is **malformed**.
+
+## Letter type catalog
+
+Each row = a recurring pattern. Adopt these names so other agents recognize the shape on sight.
+
+| Type | Trigger | Required content |
+|---|---|---|
+| `handoff.md` | New session spawned; needs full entry context | Identity, status snapshot, immediate decisions, must-read list, day-1 actions, lifecycle-end disposition |
+| `from-<x>-plan-ready.md` | Implementer finished planning; awaits greenlight | Step checklist, plan path, key decisions summary, list of items needing ack, risk signals |
+| `from-<orche>-<x>-greenlight.md` | Orchestrator approves plan / unblocks | Acks per item, any binding constraints, go/no-go |
+| `from-<x>-blocker-<topic>.md` | A-12 stop-and-ask: agent can't or shouldn't proceed unilaterally | TL;DR, mismatch/cause, 2-3 Options table (work / risk / time), implementer's tentative pick, snapshot of current state |
+| `from-<orche>-<x>-decisions.md` | Orchestrator bundles multiple decisions to one recipient | Numbered decisions with rationale, action items per decision |
+| `from-<x>-<milestone>-done.md` | Vertical slice or acceptance gate hit | Acceptance table with evidence, key technical findings, commit list, next-step request |
+| `from-<x>-archived.md` / `closed.md` | Task complete, letter chain wrapping up | Final state, links to archive, what stays / what burns |
+| `from-<x>-repomem-merge-promotes.md` | Forced human review for durable-knowledge promotion | What is being promoted, why, diff summary, HITL gate |
+| `toAllActiveSessions/from-<orche>.md` | Broadcast: new constraint, tool change, branch rename | Per-item heading, scope, action required, supersession rule |
+| `toUser/<topic>.md` | User-facing glossary, mid-task ask, or persistent reference | Plain language, no internal slang, lifecycle stated |
+
+## Communication patterns
+
+### A-12 stop-and-ask (the most important pattern)
+
+When you reach a boundary you can't cross unilaterally — scope mismatch with upstream, destructive change, ambiguity from upstream decision — STOP at the boundary. Do not merge / archive / push. Write `from-<you>-blocker-<topic>.md` with:
+
+1. **TL;DR** in 2 sentences.
+2. **Timeline** of what was delivered (commit hashes).
+3. **Mismatch core** — quote the upstream directive verbatim, then state what was actually delivered.
+4. **Options table** with 2-3 alternatives, each with work estimate + risk.
+5. **Your tentative pick + why.** Don't be neutral if you have a view; upstream needs your judgment.
+6. **Current snapshot** — worktree HEAD, test status, what is committed vs uncommitted.
+
+Stop. Wait for ack. Do not silently proceed with your preferred option.
+
+### Multi-decision ack bundle
+
+When an orchestrator owes responses to N items at once, write ONE bundled letter with numbered decisions, not N letters. Each decision: `### Dn — <topic>` → answer → action item. Easier to read; easier to burn.
+
+### Escalation with options
+
+When presenting options upstream, structure as: `(a) preferred-by-you / (b) safer-fallback / (c) defer-to-user`. Always include time estimates and risk class. Avoid "what do you want me to do?" with no proposed answers — that's an information-free letter.
+
+### Cross-worktree write
+
+A subagent in `.worktrees/<task>` writing back to main needs to either:
+- Commit the letter on the worktree branch and let it merge naturally; OR
+- Write directly to the main worktree path (e.g. `../../docs/sendbox/to<Role>/...`) and let the user / orchestrator stage from main.
+
+**Default preference**: write directly to main when the letter must be visible *before* the worktree merges (e.g. blocker, plan-ready awaiting greenlight) — the user reads main, not your branch. Commit on worktree when the letter rides along with the change itself (e.g. milestone-done bundled with the merge).
+
+**Do not** dual-write to both worktree and main hoping symmetry helps. You will forget to push one side. Pick one channel per letter.
+
+### Broadcast
+
+For information all active sessions must absorb (tool installed, branch renamed, gate added), use `toAllActiveSessions/from-<orche>.md` with multi-recipient frontmatter and a clear supersession rule.
+
+## Anti-patterns
+
+**1. Writing letters for chat-synchronous decisions.** If the user answered in chat AND the decision has no upstream follow-up AND no other session is affected → just commit (`per chat decision YYYY-MM-DD: <one-line summary>`). Writing a letter to mirror a chat decision is the #1 noise source. **Scope**: this rule targets the *worktree session replying upstream after the user already answered in its own chat*. It does NOT exempt an orchestrator relaying a substantive directive to a *detached* implementer — that implementer never saw the chat, so the letter is delivery, not duplication. Triviality bar: skip the letter only when the decision will be picked up naturally by a commit the recipient is about to rebase on.
+
+**2. Dual-syncing worktree → main.** Writing the same letter into both `.worktrees/<task>/docs/sendbox/...` and `docs/sendbox/...` *will* cause one side to be forgotten. Pick the single canonical path.
+
+**3. Localized or special-char filenames.** Letters cross worktrees, branches, and shells. Stick to `[a-z0-9-]+\.md`.
+
+**4. Using sendbox as state tracking.** If your letter says "status: in_progress", you have a dashboard problem, not a sendbox problem. State lives in a dashboard or spec; letters *trigger* state changes.
+
+**5. Rotting unburned letters.** Every letter has a lifecycle. When the lifecycle ends, `git rm` is mandatory. A `docs/sendbox/` directory that only grows is a broken sendbox. Run periodic audits.
+
+**6. Letters as narrative.** Letters are operational. No "in session X we found that…" — write the rule, the option, or the request. History belongs in commit messages.
+
+**7. One letter per micro-decision.** Bundle when you can. Five small letters to the same recipient = one bundled letter.
+
+## Interop with other protocols
+
+- **17-step pipeline / HITL gates** (if used): the `ask-first` and `HITL` steps are natural sendbox triggers. The `plan-ready` and `merge-pre-archive` checkpoints typically produce a sendbox letter.
+- **OpenSpec / spec docs**: spec contracts are durable; sendbox is transient. A `blocker` letter may *cite* a spec but never *replace* one.
+- **Memory / auto-memory**: if a sendbox letter contains a lesson worth keeping (e.g. "minimal sendbox rule"), promote it to memory and burn the letter. Letters are not long-term memory.
+- **Dashboards** (orchestrator state boards): dashboards hold *current* state; sendbox holds *requests for change*. An orchestrator reading a blocker letter updates the dashboard, then burns or archives the letter.
+
+## Quick start (drop into a fresh repo)
+
+1. `mkdir -p docs/sendbox/toOrchestrator docs/sendbox/toUser docs/sendbox/toAllActiveSessions`
+2. When spawning a session, write `docs/sendbox/to<Role>/handoff.md` with status snapshot + must-reads + day-1 actions. No frontmatter if single recipient.
+3. When the session needs to reply: `docs/sendbox/to<UpstreamRole>/from-<yourname>-<topic>.md`. Use the type catalog to pick a name.
+4. When you can't proceed: write a `from-<you>-blocker-<topic>.md` with 2-3 options, stop, wait.
+5. When lifecycle ends: `git rm` the letter. Commit message: `sendbox: burn <letter> (lifecycle ended)`.
+6. Audit weekly: `ls docs/sendbox/**/*.md` — any letter older than its stated lifecycle should already be gone.
+
+## Red flags — you are probably misusing sendbox
+
+- Writing a letter to mirror a chat decision the orchestrator made 5 minutes ago.
+- Letter directory grows monotonically with no `git rm` commits.
+- Letters titled `status-update-N.md` — that's a dashboard.
+- Filename contains non-ASCII characters or spaces.
+- Letter has no recipient role and no frontmatter — malformed.
+- Same letter copied into both worktree and main paths.
+- "Quick clarification" letters that don't ask, decide, or escalate — just narrate.
+
+All of these mean: stop, delete the letter, use the right channel.
