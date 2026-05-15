@@ -67,4 +67,4 @@ Distilled from the `everclaw` repo's `docs/HarnessStack/longterm.md § Cross-Ses
 
 ## License
 
-TBD — pick a license before publishing publicly.
+MIT — see [`LICENSE`](LICENSE).
