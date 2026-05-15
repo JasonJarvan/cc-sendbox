@@ -25,6 +25,7 @@ A file-based, lifecycle-managed **letter** convention for asynchronous coordinat
 
 ## Core principles
 
+0. **One canonical sendbox per project, held by the main agent.** The *main agent* is the session whose working directory is the project root — typically the orchestrator on the main branch / main worktree. Its `docs/sendbox/` is the **single source of truth**. Every other session (subagents in `.worktrees/<task>/`, subagents in a completely different repo or cwd, ephemeral helpers in `/tmp`) writes letters *to the main agent's sendbox by absolute path*. Never create a parallel `docs/sendbox/` under a side cwd — sendboxes do not fan out.
 1. **Roles over sessions.** Address letters to a *role* (`toOrchestrator/`, `toIpcAuthor/`), not a session name. Sessions die; roles persist across handovers.
 2. **Letters are transient.** Every letter has a defined lifecycle and must be burned (`git rm`), archived, or promoted to durable docs at lifecycle end. Rotting unburned letters is the #1 hygiene failure.
 3. **Single recipient = no metadata; multi recipient = mandatory metadata.** The frontmatter trade-off matches the coordination cost.
@@ -124,15 +125,22 @@ When an orchestrator owes responses to N items at once, write ONE bundled letter
 
 When presenting options upstream, structure as: `(a) preferred-by-you / (b) safer-fallback / (c) defer-to-user`. Always include time estimates and risk class. Avoid "what do you want me to do?" with no proposed answers — that's an information-free letter.
 
-### Cross-worktree write
+### Cross-cwd write (subagent whose working directory ≠ main agent's)
 
-A subagent in `.worktrees/<task>` writing back to main needs to either:
-- Commit the letter on the worktree branch and let it merge naturally; OR
-- Write directly to the main worktree path (e.g. `../../docs/sendbox/to<Role>/...`) and let the user / orchestrator stage from main.
+By Core Principle 0, the main agent's `docs/sendbox/` is canonical. Any subagent whose cwd is *not* the project root must reach that path explicitly. Three common cases:
 
-**Default preference**: write directly to main when the letter must be visible *before* the worktree merges (e.g. blocker, plan-ready awaiting greenlight) — the user reads main, not your branch. Commit on worktree when the letter rides along with the change itself (e.g. milestone-done bundled with the merge).
+| Subagent cwd | Where to write the letter |
+|---|---|
+| `<project>/.worktrees/<task>/` (same repo, different worktree) | Either commit on the worktree branch (the letter rides with the merge), OR write to `<project>/docs/sendbox/to<Role>/...` via relative `../../` traversal (the letter is visible to main *before* the merge) |
+| Completely different repo or `/tmp/...` (different cwd, no shared git tree) | Write to the main agent's sendbox by **absolute path** (`/home/.../<main-project>/docs/sendbox/to<Role>/...`). Do NOT create `docs/sendbox/` under your own cwd |
+| Same project, same cwd (just a peer session) | Write to `docs/sendbox/to<Role>/...` directly — trivial case |
 
-**Do not** dual-write to both worktree and main hoping symmetry helps. You will forget to push one side. Pick one channel per letter.
+**Default channel for case 1** (same-repo, different worktree): write directly to main when the letter must be visible *before* the worktree merges (blocker, plan-ready awaiting greenlight). Commit on worktree when the letter rides along with the change (milestone-done bundled with the merge).
+
+**Hard rules across all cases:**
+- Never create a parallel `docs/sendbox/` under a side cwd. Sendboxes do not fan out — there is exactly one per project, held by the main agent.
+- Never dual-write to both your local path and the main path "for symmetry". You will forget to push one side; pick one channel per letter.
+- If the subagent cannot reach the main agent's path (sandbox / permission boundary), it MUST surface that to the user rather than write a shadow sendbox.
 
 ### Broadcast
 
@@ -163,7 +171,7 @@ For information all active sessions must absorb (tool installed, branch renamed,
 
 ## Quick start (drop into a fresh repo)
 
-1. `mkdir -p docs/sendbox/toOrchestrator docs/sendbox/toUser docs/sendbox/toAllActiveSessions`
+1. Pick the **main agent's project root** — the one repository whose `docs/sendbox/` will be canonical. Run `mkdir -p docs/sendbox/toOrchestrator docs/sendbox/toUser docs/sendbox/toAllActiveSessions` there, and only there. Subagents in side cwds will reach this path by relative traversal or absolute path; they do NOT create their own sendbox.
 2. When spawning a session, write `docs/sendbox/to<Role>/handoff.md` with status snapshot + must-reads + day-1 actions. No frontmatter if single recipient.
 3. When the session needs to reply: `docs/sendbox/to<UpstreamRole>/from-<yourname>-<topic>.md`. Use the type catalog to pick a name.
 4. When you can't proceed: write a `from-<you>-blocker-<topic>.md` with 2-3 options, stop, wait.
@@ -178,6 +186,7 @@ For information all active sessions must absorb (tool installed, branch renamed,
 - Filename contains non-ASCII characters or spaces.
 - Letter has no recipient role and no frontmatter — malformed.
 - Same letter copied into both worktree and main paths.
+- A `docs/sendbox/` directory exists under a subagent's cwd (a `.worktrees/...` path, a `/tmp` dir, or a sister repo) — sendboxes do not fan out; there is one per project held by the main agent.
 - "Quick clarification" letters that don't ask, decide, or escalate — just narrate.
 
 All of these mean: stop, delete the letter, use the right channel.
