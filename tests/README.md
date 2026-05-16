@@ -36,8 +36,9 @@ For each fixture file in `tests/outsider-scenarios/`:
 | `03-cross-cwd-write.md` | Where the letter goes (path) | 6 | Core Principle #0 / Cross-cwd write / Red flags |
 | `04-hs-factory-decision.md` | HS-factory embed/skip decision | 4 | Playbook §2 decision tree (out-of-skill) |
 | `05-hs-factory-procedure.md` | HS-factory embedding mechanics | 2 | Playbook §3 checklist (out-of-skill) |
+| `06-handoff-modes.md` | child vs inheritance vs peer | 4 | Handoff modes section + Mode detection rule (added in 0.2.0) |
 
-Fixtures `01`–`03` test the skill itself; `04`–`05` test `docs/sendbox/toHarnessFactory/from-sendbox-embedding-playbook.md`. Run `04`–`05` whenever the playbook changes (separate trigger from skill changes).
+Fixtures `01`–`03` and `06` test the skill itself; `04`–`05` test `docs/sendbox/toHarnessFactory/from-sendbox-embedding-playbook.md`. Run `04`–`05` whenever the playbook changes (separate trigger from skill changes).
 
 ## Provenance
 
@@ -50,4 +51,4 @@ Scenarios collected from 4 subagent dispatches during 2026-05-15 → 2026-05-16:
 | canonical-sendbox/main-agent GREEN | Q1–Q3 + Bonus (4) | 03 |
 | HS-factory playbook GREEN | S1–S4 + P1–P2 (6) | 04 + 05 |
 
-Total: 23.
+Total v0.1: 23. Added in 0.2.0: 4 (fixture 06). Cumulative: **27**.

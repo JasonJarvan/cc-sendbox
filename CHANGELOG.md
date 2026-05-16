@@ -4,6 +4,33 @@ All notable changes to `sendbox-protocol` (the skill in `skills/sendbox-protocol
 
 **Versioning scope**: this changelog tracks the skill body only. Repository-level changes (docs reshuffles, RepoMem captures, sendbox dogfood, CI bits) are visible via `git log` and not duplicated here.
 
+## [0.2.0] — 2026-05-16
+
+### Added — handoff modes (child vs inheritance)
+
+The `handoff.md` letter type now formally has two semantic modes, dictated by the lifecycle relationship between the spawning session (parent) and the spawned session.
+
+- **Mode A (child-handoff)**: parent persists; new session is a bounded subordinate that converges back. Required content: subtask scope, minimum inputs, convergence path, parent cwd (if cross-cwd), out-of-scope statement. Forbidden: full project context dumps.
+- **Mode B (inheritance-handoff)**: parent terminates; new session takes ownership. Required: identity statement, full status snapshot, must-read list, pending decisions, active relationships, env state. Forbidden: convergence path back to (now-defunct) parent.
+- **Mode C (peer dialogue)**: not a handoff — use normal letter types between coexisting sessions.
+
+Declared in letter body via `> mode: child` or `> mode: inheritance` quote block; filename stays `handoff.md`.
+
+Mode detection rule added (two-question check; both must agree).
+
+### Why minor bump
+
+This is the first SKILL.md body change that introduces a semantic distinction agents must observe. Backwards-compatible (existing handoff letters remain valid; the modes are an explicit categorization of what was already implicit). Per SemVer: additive semantic = MINOR.
+
+### Test coverage
+
+- `tests/outsider-scenarios/06-handoff-modes.md` (4 scenarios, child / inheritance / peer-rejection / minimum-scope-child)
+- Cumulative fixture scenarios: 27
+
+### RepoMem capture
+
+- `docs/RepoMem/persist/memory/handoff-modes.md` — durable lesson on the two-mode split, why it matters, failure modes observed in cc-sendbox / EverClaw practice
+
 ## [0.1.0] — 2026-05-16
 
 Initial release. The skill distills 4 days of multi-agent EverClaw practice (11+ agents, 22+ letter types, 8 sendbox directories) into a portable, framework-agnostic convention.

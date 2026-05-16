@@ -1,6 +1,6 @@
 ---
 name: sendbox-protocol
-version: 0.1.0
+version: 0.2.0
 description: Use when multiple agents/sessions need asynchronous file-based communication across worktrees, branches, or sessions — defines directory layout, letter naming, frontmatter spec, lifecycle (burn/archive/persist), and the canonical letter types (handoff, plan-ready, greenlight, blocker, decisions, milestone-done, broadcast). Apply when designing or running multi-agent orchestration (one orchestrator + multiple implementers / subagents) and chat-synchronous coordination is insufficient.
 ---
 
@@ -92,7 +92,7 @@ Each row = a recurring pattern. Adopt these names so other agents recognize the 
 
 | Type | Trigger | Required content |
 |---|---|---|
-| `handoff.md` | New session spawned; needs full entry context | Identity, status snapshot, immediate decisions, must-read list, day-1 actions, lifecycle-end disposition |
+| `handoff.md` (two modes — see Handoff modes section) | New session spawned; needs entry context | Mode-dependent (child vs inheritance) — see dedicated section |
 | `from-<x>-plan-ready.md` | Implementer finished planning; awaits greenlight | Step checklist, plan path, key decisions summary, list of items needing ack, risk signals |
 | `from-<orche>-<x>-greenlight.md` | Orchestrator approves plan / unblocks | Acks per item, any binding constraints, go/no-go |
 | `from-<x>-blocker-<topic>.md` | A-12 stop-and-ask: agent can't or shouldn't proceed unilaterally | TL;DR, mismatch/cause, 2-3 Options table (work / risk / time), implementer's tentative pick, snapshot of current state |
@@ -146,6 +146,77 @@ By Core Principle 0, the main agent's `docs/sendbox/` is canonical. Any subagent
 ### Broadcast
 
 For information all active sessions must absorb (tool installed, branch renamed, gate added), use `toAllActiveSessions/from-<orche>.md` with multi-recipient frontmatter and a clear supersession rule.
+
+## Handoff modes — child vs inheritance
+
+The `handoff.md` letter (entry letter for a newly-spawned session) has two semantic modes, dictated by the **lifecycle relationship** between the spawning session (parent) and the spawned session. The mode determines what the letter should contain.
+
+Declare the mode in the letter's body — the top-line quote block (`> mode: child` or `> mode: inheritance`) is sufficient. The filename stays `handoff.md` either way.
+
+### Mode A — child-handoff (parent persists; child converges back)
+
+The spawning session continues to live; the new session is a bounded subordinate handling one subtask, then dying. Convergence is part of the contract.
+
+**Required content:**
+
+| Slot | Content |
+|---|---|
+| Subtask scope | 1-2 paragraphs: what specifically, success criteria |
+| Inputs | Files / paths / references the child needs — the *minimum* set |
+| Convergence path | Where to write back when done (`from-<child>-<milestone>-done.md` to parent's `to<ParentRole>/`); where to write if stuck (`from-<child>-blocker-<topic>.md`) |
+| Parent's cwd (absolute path) | Required if the child is in a different cwd / worktree / repo — child writes back by absolute path per Cross-cwd write rules |
+| Out-of-scope explicit statement | What NOT to do (prevents scope creep) |
+
+**Forbidden content:**
+
+- Full project context dump (version-plan, full architecture, broad history)
+- Reading lists beyond what the subtask requires
+- Pending unrelated decisions / open questions
+
+A child should re-fetch context as needed, not receive a context dump.
+
+**Lifecycle:** burn after the child converges (parent reads done letter, both letters archive or burn).
+
+### Mode B — inheritance-handoff (parent ends; inheritor takes ownership)
+
+The spawning session is about to terminate (session compaction, orchestrator handover, role transfer). The new session inherits the parent's full active responsibility. There is no convergence back — the parent will be gone.
+
+**Required content:**
+
+| Slot | Content |
+|---|---|
+| Identity statement | "You are <role>, you inherit <parent>'s responsibility for <scope>" |
+| Status snapshot | Table: done / in-flight / pending — concrete commits / letters / blockers |
+| Must-read list | version-plan, recent letters, active blockers, architecture docs — the full reading set |
+| Pending decisions / open questions | Anything the parent didn't finalize and the inheritor must |
+| Active relationships | Other sessions / repos this responsibility coordinates with |
+| Env / tool state | Uncommitted changes, worktree state, branch HEAD |
+| Lifecycle disposition | When this letter itself burns (typically after inheritor logs first milestone) |
+
+**Forbidden content:**
+
+- A convergence path back to parent — parent is gone; there is no parent
+- Subtask scope narrower than the full inherited responsibility (this is not a subtask; it is a role transfer)
+
+**Lifecycle:** `persist` for audit until inheritor's first milestone-done letter, then burn (the inheritor's first delivered milestone implicitly ratifies the handoff).
+
+### Mode C — peer dialogue (not a handoff)
+
+If two sessions already exist and need to coordinate (neither inherits or owns the other), this is **not** a handoff pattern. Peer relationships are typically orchestrator-mediated: an orchestrator spawns A and B each via Mode-A child-handoffs, and A and B coordinate peer-to-peer using normal letter types (blocker, decisions, milestone-done). No peer-handoff letter type exists; do not invent one.
+
+If A genuinely needs to delegate a subtask to B mid-flight, A becomes B's parent for that subtask — file a Mode-A child-handoff from A to B.
+
+### Mode detection rule
+
+When writing a `handoff.md`, ask:
+- "Does the spawning session continue to live after this handoff?"
+  - **Yes** → Mode A (child)
+  - **No** → Mode B (inheritance)
+- "Does the new session need to report back?"
+  - **Yes** → Mode A (child)
+  - **No** → Mode B (inheritance)
+
+Both questions should give the same answer for a well-formed handoff. If they disagree (parent stays alive but new session does not report back), the relationship is ambiguous — clarify before writing the letter.
 
 ## Anti-patterns
 
