@@ -77,7 +77,60 @@ If multiple sessions ever coordinate in this repo, follow `skills/sendbox-protoc
 
 ### Filenames
 
-ASCII / English / lowercase-kebab. No localized characters, no spaces. Applies to skill files, RepoMem files, sendbox letters, scripts.
+ASCII / English / lowercase-kebab. No localized characters, no spaces. Applies to skill files, RepoMem files, sendbox letters, scripts. Filename language convention is separate from content language — see Language policy below.
+
+## Language policy
+
+Two-tier language model for documentation content:
+
+| Config | This repo | Meaning |
+|---|---|---|
+| `userLanguage` | 中文 (Chinese) | Language the human maintainer reads / interacts with |
+| `modelLanguage` | English | Language for model-facing internal documentation |
+
+### Rules
+
+1. **HITL / user-facing docs** (user reads them in workflow — explicit interaction): write in `userLanguage`
+2. **Non-HITL / model-facing docs** (agents read them; user typically does not touch in workflow): write in `modelLanguage` = English
+3. **External discovery docs** (project README, public landing): English by default for international reach; translations land at `.{lang}.md` siblings
+
+### Filename suffix convention
+
+- `<name>.md` (no suffix) = English (default; matches modelLanguage)
+- `<name>.{lang}.md` = non-English content (ISO 639-1: `.zh`, `.ja`, `.de`, …)
+
+When `userLanguage ≠ English`, a user-facing doc MUST carry the suffix. Example: `glossary.zh.md` for a Chinese glossary letter to the user.
+
+### Classification (current cc-sendbox)
+
+| Doc | Audience | Language | File state |
+|---|---|---|---|
+| `README.md` | external discovery | English | conforming (English-first; `README.zh.md` translation candidate when convenient) |
+| `CLAUDE.md` | model-facing | English | conforming |
+| `CHANGELOG.md` | model + external | English | conforming |
+| `LICENSE` | external legal | English | n/a (license text) |
+| `skills/sendbox-protocol/SKILL.md` | model-facing | English | conforming |
+| `docs/HarnessStack/*` | model-facing | English | conforming |
+| `docs/RepoMem/persist/version-plan.zh.md` | model-facing | 中文 | **non-conforming** (should be English; suffix declares status; scheduled rewrite) |
+| `docs/RepoMem/persist/architecture/*` | model-facing | English | conforming |
+| `docs/RepoMem/persist/memory/*.zh.md` | model-facing | 中文 | **non-conforming** (scheduled rewrite) |
+| `docs/RepoMem/temp/*` | model-facing | English (mixed in places) | mostly conforming |
+| `docs/sendbox/toUser/glossary.md` | user-facing HITL | English | **non-conforming** (should be 中文; scheduled rewrite as `glossary.zh.md`) |
+| `docs/sendbox/toAllAgents/*` | model-facing (agent readers) | English | conforming |
+| `docs/sendbox/toHarnessFactory/*` | model-facing | English | conforming |
+| `docs/sendbox/toRepomem/*` | model-facing (sister-skill maintainer) | English | conforming (when added) |
+| `tests/*` | model-facing | English | conforming |
+
+### Audit + migration
+
+- **New docs**: classify first; pick language + suffix accordingly
+- **Existing non-conforming**: rename to `.zh.md` if currently 中文 (suffix declares true status); rewrite to English on next touch
+- **HITL doc currently in wrong language** (e.g. `glossary.md` English): not auto-rewritten; flagged in this table; rewrite when the doc is next substantively edited
+- **Cost rule**: do not rewrite a doc solely for language compliance; align language on the next substantive edit
+
+### Relationship to repo-mem language-policy
+
+`~/.claude/skills/repo-mem/references/language-policy.md` exists as a parallel governance mechanism for RepoMem-managed projects. cc-sendbox's policy here is independent — both policies coexist (per user decision 2026-05-16). A sister-skill letter is filed at `docs/sendbox/toRepomem/from-sendbox-language-policy-suggestion.md` suggesting repo-mem adopt the same HITL/non-HITL split.
 
 ## Directory layout (current + on demand)
 
@@ -92,9 +145,9 @@ cc-sendbox/
       temporary-<task>.md            # per-task patch (one at a time)
     RepoMem/
       persist/
-        version-plan.md              # current + next direction
+        version-plan[.zh].md         # current + next direction (suffix per Language policy)
         architecture/<topic>.md      # frontmatter: domain, last_reviewed_at
-        memory/<topic>.md            # frontmatter: domain, last_reviewed_at
+        memory/<topic>[.zh].md       # frontmatter: domain, last_reviewed_at; suffix per Language policy
       temp/<slug>/                   # transient capture during a task
     sendbox/to<Role>/                # only if multi-session work happens
   skills/

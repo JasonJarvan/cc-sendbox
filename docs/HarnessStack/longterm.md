@@ -155,7 +155,7 @@
 ## Related Documents
 
 - `docs/HarnessStack/temporary-<task>.md`
-- `docs/RepoMem/persist/version-plan.md`
+- `docs/RepoMem/persist/version-plan[.{lang}].md`
 - Related RepoMem architecture and memory docs
 
 ## Cross-Method Invariants

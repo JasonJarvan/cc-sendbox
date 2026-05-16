@@ -45,7 +45,7 @@ If none of the above is plausible (truly solo single-session work), skip the emb
 
 ### 2.3 Skip outcome
 
-If skipping: do NOT create `docs/sendbox/`, do NOT touch `longterm.md`. Record the decision in the target repo's `version-plan.md` "未来考虑" or equivalent so a future factory pass can reconsider.
+If skipping: do NOT create `docs/sendbox/`, do NOT touch `longterm.md`. Record the decision in the target repo's `version-plan[.{lang}].md` "future considerations" / "未来考虑" or equivalent so a future factory pass can reconsider.
 
 ## 3. Embedding checklist (when §2 says embed)
 
@@ -58,7 +58,7 @@ Pick the cheapest mechanism the target user already has:
   ln -s /home/<user>/Codes/cc-sendbox/skills/sendbox-protocol \
         ~/.claude/skills/sendbox-protocol
   ```
-- **Plugin manifest** (when cc-sendbox v0.2 ships one — pending; see cc-sendbox `version-plan.md` v0.2 candidate #1)
+- **Plugin manifest** (when cc-sendbox v0.2 ships one — pending; see cc-sendbox `version-plan[.{lang}].md` v0.2 candidate #1)
 
 Verify: Claude Code recognises `sendbox-protocol` in the skill list at next session start.
 

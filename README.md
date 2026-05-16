@@ -51,7 +51,7 @@ cc-sendbox/
 └── docs/
     └── RepoMem/
         └── persist/
-            ├── version-plan.md            # v0.1 state + direction
+            ├── version-plan.zh.md         # v0.1 state + direction (currently 中文; see CLAUDE.md Language policy)
             └── memory/                    # cross-task lessons
 ```
 
@@ -59,7 +59,7 @@ cc-sendbox/
 
 - **v0.1** — protocol distilled + self-tested (RED→GREEN with fresh outsider subagents).
 - Repository type: long-lived platform repo, solo scale; active recipe `superpowers-repomem` (see `docs/HarnessStack/longterm.md`).
-- Direction: see `docs/RepoMem/persist/version-plan.md`.
+- Direction: see `docs/RepoMem/persist/version-plan.zh.md`.
 
 ## Provenance
 

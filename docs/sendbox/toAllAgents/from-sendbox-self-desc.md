@@ -57,7 +57,7 @@ Skip when:
 - Skill body: [`skills/sendbox-protocol/SKILL.md`](../../../skills/sendbox-protocol/SKILL.md)
 - Repo rules: [`CLAUDE.md`](../../../CLAUDE.md)
 - HarnessStack contract: [`docs/HarnessStack/longterm.md`](../../HarnessStack/longterm.md)
-- Roadmap: [`docs/RepoMem/persist/version-plan.md`](../../RepoMem/persist/version-plan.md)
+- Roadmap: [`docs/RepoMem/persist/version-plan.zh.md`](../../RepoMem/persist/version-plan.zh.md)
 - Past gap closures (RED→GREEN history): [`docs/RepoMem/persist/memory/`](../../RepoMem/persist/memory/)
 - Embedding into HarnessStack repos: [`../toHarnessFactory/from-sendbox-embedding-playbook.md`](../toHarnessFactory/from-sendbox-embedding-playbook.md)
 - GitHub: https://github.com/JasonJarvan/cc-sendbox
