@@ -98,7 +98,7 @@ Each row = a recurring pattern. Adopt these names so other agents recognize the 
 | `from-<orche>-<x>-decisions.md` | Orchestrator bundles multiple decisions to one recipient | Numbered decisions with rationale, action items per decision |
 | `from-<x>-<milestone>-done.md` | Vertical slice or acceptance gate hit | Acceptance table with evidence, key technical findings, commit list, next-step request |
 | `from-<x>-archived.md` / `closed.md` | Task complete, letter chain wrapping up | Final state, links to archive, what stays / what burns |
-| `from-<x>-repomem-merge-promotes.md` | Forced human review for durable-knowledge promotion | What is being promoted, why, diff summary, HITL gate |
+| `from-<x>-promote-to-durable.md` | Forced human review for promoting transient knowledge into a durable knowledge store | What is being promoted, why, diff summary, HITL gate |
 | `toAllActiveSessions/from-<orche>.md` | Broadcast: new constraint, tool change, branch rename | Per-item heading, scope, action required, supersession rule |
 | `toUser/<topic>.md` | User-facing glossary, mid-task ask, or persistent reference | Plain language, no internal slang, lifecycle stated |
 
@@ -164,10 +164,14 @@ For information all active sessions must absorb (tool installed, branch renamed,
 
 ## Interop with other protocols
 
-- **17-step pipeline / HITL gates** (if used): the `ask-first` and `HITL` steps are natural sendbox triggers. The `plan-ready` and `merge-pre-archive` checkpoints typically produce a sendbox letter.
-- **OpenSpec / spec docs**: spec contracts are durable; sendbox is transient. A `blocker` letter may *cite* a spec but never *replace* one.
-- **Memory / auto-memory**: if a sendbox letter contains a lesson worth keeping (e.g. "minimal sendbox rule"), promote it to memory and burn the letter. Letters are not long-term memory.
+Sendbox is framework-agnostic. It coexists with whatever workflow / spec / memory / dashboard system the host project already uses. The general principles below apply regardless of the specific framework:
+
+- **Pipeline-style workflows with verification gates / HITL approvals**: ask-first and HITL steps are natural sendbox triggers. Plan-ready, blocker, and merge-pre-archive checkpoints typically produce a sendbox letter.
+- **Spec systems** (any contract-style spec layer): spec contracts are durable; sendbox is transient. A `blocker` letter may *cite* a spec but never *replace* one.
+- **Long-term knowledge stores** (any persistent memory / architecture-doc layer): if a sendbox letter contains a lesson worth keeping, promote it to the knowledge store and burn the letter. Letters are not long-term memory.
 - **Dashboards** (orchestrator state boards): dashboards hold *current* state; sendbox holds *requests for change*. An orchestrator reading a blocker letter updates the dashboard, then burns or archives the letter.
+
+Framework-specific embedding mechanics (how to actually slot sendbox into a given workflow stack) belong outside this skill, in framework-targeted playbook letters under `docs/sendbox/to<Framework>Factory/`. The skill stays framework-agnostic; each adopting framework writes its own playbook.
 
 ## Quick start (drop into a fresh repo)
 
