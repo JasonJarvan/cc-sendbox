@@ -1,6 +1,18 @@
+---
+slug: sendbox-in-harnessstack
+status: merged
+domains:
+  - sendbox-protocol
+updated_at: 2026-05-16
+task_type: feature
+merge_target: docs/RepoMem/persist/architecture/sendbox-in-harnessstack.md
+merge_date: 2026-05-16
+merge_sections: §A + §B
+---
+
 # Design: sendbox 在 HarnessStack 体系中的嵌入
 
-**Status**: brainstorming approved 2026-05-15. Implementation in flight. After implementation + verification, this doc plus `00-INDEX.md` (if added) is candidate for `RepoMem.merge` HITL promotion to `docs/RepoMem/persist/architecture/sendbox-in-harnessstack.md`.
+**Status**: brainstorming approved 2026-05-15. Implementation complete + HITL merge done 2026-05-16. §A + §B promoted to `docs/RepoMem/persist/architecture/sendbox-in-harnessstack.md`. §C–§H stay here as task-scoped residue (do not merge per merge rules).
 
 **Single Task Identifier**: `sendbox-in-harnessstack`
 - HarnessStack `<task>`: `sendbox-in-harnessstack`
