@@ -1,5 +1,7 @@
 # cc-sendbox
 
+> 🇨🇳 中文版本: [`README.zh.md`](README.zh.md)
+
 A portable convention for **asynchronous, file-based communication between agent sessions**.
 
 Ships one skill — `sendbox-protocol` — distilled from a 4-day multi-agent sprint (11+ agents, 22+ letter types, 8 sendbox directories) into a reusable reference.
