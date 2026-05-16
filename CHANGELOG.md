@@ -4,6 +4,21 @@ All notable changes to `sendbox-protocol` (the skill in `skills/sendbox-protocol
 
 **Versioning scope**: this changelog tracks the skill body only. Repository-level changes (docs reshuffles, RepoMem captures, sendbox dogfood, CI bits) are visible via `git log` and not duplicated here.
 
+## [0.2.1] — 2026-05-16
+
+### Added — cleanup checkpoints
+
+Two explicit checkpoint moments codified for actively executing lifecycle dispositions (was implicit in anti-pattern #5; now prescriptive):
+
+- **Checkpoint 1 — at session end**: scan sendbox for letters you authored or addressed; execute disposition (burn / archive / persist) for any letter whose lifecycle has triggered
+- **Checkpoint 2 — at task convergence**: sweep matched letter pairs (handoff + milestone-done; blocker + decisions; plan-ready + greenlight; superseded broadcast). Prevents half-completed conversation clutter.
+
+Plus exemption clarification: `persist` letters skip the checkpoint sweep — they are reference docs that live in sendbox dir but do not rot.
+
+### Why patch bump
+
+Makes implicit intent (anti-pattern #5 reactive audit) explicit and prescriptive (proactive sweep). Existing letter / lifecycle semantics unchanged; this is operational discipline, not new mechanics.
+
 ## [0.2.0] — 2026-05-16
 
 ### Added — handoff modes (child vs inheritance)

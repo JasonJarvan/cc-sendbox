@@ -1,6 +1,6 @@
 ---
 name: sendbox-protocol
-version: 0.2.0
+version: 0.2.1
 description: Use when multiple agents/sessions need asynchronous file-based communication across worktrees, branches, or sessions — defines directory layout, letter naming, frontmatter spec, lifecycle (burn/archive/persist), and the canonical letter types (handoff, plan-ready, greenlight, blocker, decisions, milestone-done, broadcast). Apply when designing or running multi-agent orchestration (one orchestrator + multiple implementers / subagents) and chat-synchronous coordination is insufficient.
 ---
 
@@ -233,6 +233,42 @@ Both questions should give the same answer for a well-formed handoff. If they di
 **6. Letters as narrative.** Letters are operational. No "in session X we found that…" — write the rule, the option, or the request. History belongs in commit messages.
 
 **7. One letter per micro-decision.** Bundle when you can. Five small letters to the same recipient = one bundled letter.
+
+## Cleanup checkpoints
+
+Lifecycle dispositions don't execute themselves. The letter's author and recipient share responsibility for triggering cleanup at two specific moments. Make these checkpoints explicit in agent discipline; do NOT defer "until later" — the next session may be a different role and miss the cue.
+
+### Checkpoint 1 — at session end
+
+Before terminating, scan `docs/sendbox/` for (a) letters you authored and (b) letters addressed to your role. For each letter, evaluate its lifecycle condition. If the condition has triggered, execute the disposition immediately:
+
+| Disposition | Action |
+|---|---|
+| `burn` | `git rm <letter>` and commit (`sendbox: burn <letter> (lifecycle ended)`) |
+| `archive` | move to `docs/sendbox/archive/<letter>` |
+| `persist` | confirm the content has been promoted to durable docs, then burn the letter (persist means *promoted-then-burned*, not *kept forever*) |
+
+### Checkpoint 2 — at task convergence
+
+When a task chain completes, sweep the full letter chain associated with that task. Typical pairs to burn together:
+
+| Trigger event | Burn pair |
+|---|---|
+| Child reports `milestone-done` to parent | `handoff.md` (parent→child) + `from-<child>-milestone-done.md` |
+| Inheritance handoff: inheritor logs first milestone-done | `handoff.md` (inheritance) — the milestone implicitly ratifies the transfer |
+| A-12 blocker resolved | `from-<x>-blocker-<topic>.md` + `from-<orche>-<x>-decisions.md` (the answer) |
+| Plan greenlit | `from-<x>-plan-ready.md` + `from-<orche>-<x>-greenlight.md` |
+| Broadcast superseded | the prior broadcast letter (supersession event fires) |
+
+Burning matched pairs together prevents "half-completed conversations" cluttering the sendbox dir.
+
+### Why active sweeping (vs reactive audit)
+
+Anti-pattern #5 (rotting unburned letters) describes the *symptom*. These checkpoints are the *prevention*. An adopter who runs cleanup proactively at the two checkpoints above never accumulates rot; reactive audit becomes a backstop, not a routine.
+
+### What stays (persist disposition exemption)
+
+Letters whose lifecycle is explicitly `persist` (e.g. `from-sendbox-self-desc.md`, `toUser/glossary.md`, embedding playbooks) stay across session ends and task convergences. They are reference docs that happen to live in sendbox dir — the checkpoint sweep skips them. Re-evaluate `persist` letters only on substantive content change.
 
 ## Interop with other protocols
 
