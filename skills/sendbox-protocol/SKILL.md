@@ -1,5 +1,6 @@
 ---
 name: sendbox-protocol
+version: 0.1.0
 description: Use when multiple agents/sessions need asynchronous file-based communication across worktrees, branches, or sessions — defines directory layout, letter naming, frontmatter spec, lifecycle (burn/archive/persist), and the canonical letter types (handoff, plan-ready, greenlight, blocker, decisions, milestone-done, broadcast). Apply when designing or running multi-agent orchestration (one orchestrator + multiple implementers / subagents) and chat-synchronous coordination is insufficient.
 ---
 

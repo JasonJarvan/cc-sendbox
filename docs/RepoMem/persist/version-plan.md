@@ -35,14 +35,22 @@ cc-sendbox 是 `sendbox-protocol` skill 的发布仓。HarnessStack 身份：**s
 
 v0.1 收敛门 = 上述全部完成 + skill 在另一项目实测过一次 Quick Start 6 步。
 
-## v0.2 方向（尚未拍板）
+**v0.1.0 released 2026-05-16** —— 收敛门用 cc-sendbox 自身的 dogfood 闭合（在本仓启用 sendbox 写第一封 letter + HS 嵌入设计 brainstorm + HITL merge）。See CHANGELOG.md.
 
-候选方向（按可能性排）：
+## v0.2 in progress (2026-05-16 ~)
 
-1. **打包为 Claude Code plugin**——加 plugin manifest，让别人 `git+install` 直接拿到。Trigger: 有第三方用户问"怎么装"。
-2. **PR 到上游 Superpowers**——成为 `superpowers:sendbox-protocol`。Trigger: skill 经过 2-3 个真实项目实测、措辞稳定。
-3. **Examples 目录**——加 `examples/letters/` 展示典型 handoff / blocker / decisions 信件骨架（脱敏过的）。Trigger: 用户反馈 SKILL.md 文字描述不够具象。
-4. **加 validator 脚本**——一个小 Python 校验器，检查 sendbox/ 目录是否合规（frontmatter / 命名 / lifecycle stale）。Trigger: dogfood 中发现手动审计太费时；ECC 层在此时正式进入。
+按 cost-aware 排序执行：
+
+1. ✅ **Version + CHANGELOG** —— SKILL frontmatter `version: 0.1.0` + CHANGELOG.md (current task)
+2. 🟡 **Test fixtures (manual runner)** —— `tests/outsider-scenarios/*.md`，~23 题固化；无自动 hook，控制成本
+3. 🟡 **toUser glossary** —— 第一个 toUser letter 实例，含术语表
+4. 🟡 **Sendbox letter back to EverClaw** —— 跨仓 letter，3 条 lesson 反哺到 `everclaw/docs/sendbox/toTuiOrchestrator/`
+
+候选未排程：
+- **打包为 Claude Code plugin**——加 plugin manifest。Trigger: 有第三方用户问"怎么装"。Test fixtures 是其前置条件之一
+- **PR 到上游 Superpowers**——成为 `superpowers:sendbox-protocol`。Trigger: skill 经过 2-3 个真实项目实测、措辞稳定
+- **Examples 目录**——加 `examples/letters/` 展示典型信件骨架（脱敏过的）。Trigger: 用户反馈 SKILL.md 文字描述不够具象。**部分由 toUser glossary 间接覆盖**
+- **加 validator 脚本**——一个小 Python 校验器，检查 sendbox/ 目录是否合规（frontmatter / 命名 / lifecycle stale）。Trigger: dogfood 中发现手动审计太费时；ECC 层在此时正式进入
 
 ## 更远（方向性）
 
