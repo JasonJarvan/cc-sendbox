@@ -302,3 +302,7 @@ Framework-specific embedding mechanics (how to actually slot sendbox into a give
 - "Quick clarification" letters that don't ask, decide, or escalate — just narrate.
 
 All of these mean: stop, delete the letter, use the right channel.
+
+## See also
+
+- [`cc-dashboard`](https://github.com/JasonJarvan/cc-dashboard) — projection skill that maintains a single source of truth (`docs/Dashboard/index.md`) for pending user actions distilled from sendbox letters, handoff briefs, and external trackers. Recommended companion when multi-implementer orchestration accumulates user-blocking asks across many `toUser/` letters; turns "user has to read 7 letters to find pending sub-asks" into "user opens one markdown table".
